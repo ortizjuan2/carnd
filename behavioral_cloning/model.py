@@ -14,13 +14,14 @@ import matplotlib.pyplot as plt
 import h5py
 import os
 from sys import exit
+from random import randint
 
 
 IMGROWS = 120  
 IMGCOLS = 320
 IMGCHAN = 3
 
-EPOCH = 10
+EPOCH = 5
 
 class get_data:
     def __init__(self, datafile):
@@ -36,14 +37,20 @@ class get_data:
         print('open data done!')
         
     def next_batch(self, batch_size):
+        i = 0
+        iter_by_epoch = int(self.size / batch_size)
         while 1:
-            imgs = self.h5['images'][self.last_index:self.last_index+batch_size]
+            #imgs = self.h5['images'][self.last_index:self.last_index+batch_size]
+            lower_idx = i*batch_size
+            upper_idx = lower_idx + batch_size
+            imgs = self.h5['images'][lower_idx:upper_idx]
             imgs = imgs.astype(np.float32)/255.0
-            labels = self.h5['labels'][self.last_index:self.last_index+batch_size]
-            self.last_index += batch_size
-            if self.last_index >= self.size:
-                self.last_index = 0
+            #labels = self.h5['labels'][self.last_index:self.last_index+batch_size]
+            labels = self.h5['labels'][lower_idx:upper_idx]
             yield (imgs, labels)
+            i += 1
+            if i >= iter_by_epoch:
+                i = 0
 
 
  
@@ -150,14 +157,14 @@ if __name__ == '__main__':
     adam = Adam(lr=0.001, beta_1=0.9, beta_2=0.999, epsilon=1e-8, decay=0.0)
     model.compile(loss='mean_squared_error', optimizer=adam, metrics=['accuracy'])
 
-    checkpointer = ModelCheckpoint(filepath='model_weights.h5', verbose=1,
-                                    save_best_only=False,
-                                    save_weights_only=True)
+    #checkpointer = ModelCheckpoint(filepath='model_weights.h5', verbose=1,
+    #                                save_best_only=False,
+    #                                save_weights_only=True)
     history = model.fit_generator(datatrain.next_batch(128), 
                             samples_per_epoch=datatrain.size, 
                             nb_epoch=EPOCH, 
-                            verbose=1,
-                            callbacks=[checkpointer])
+                            verbose=1)
+                            #callbacks=[checkpointer])
     #history = model.fit(data['features'][0:1000].reshape(*data['features'][0:1000].shape, 1), 
     #                    data['steering'][0:1000], 
     #                    batch_size=128, nb_epoch=10, 
