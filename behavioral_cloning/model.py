@@ -15,13 +15,14 @@ import h5py
 import os
 from sys import exit
 from random import randint
-
+from sklearn.model_selection import KFold
+from tqdm import trange
 
 IMGROWS = 120  
 IMGCOLS = 320
 IMGCHAN = 3
 
-EPOCH = 5
+EPOCH = 10
 
 class get_data:
     def __init__(self, datafile):
@@ -36,17 +37,18 @@ class get_data:
         #self.test_size = self.h5test['labels'].shape[0]
         print('open data done!')
         
-    def next_batch(self, batch_size):
+    def next_batch(self, train, batch_size=128):
         i = 0
-        iter_by_epoch = int(self.size / batch_size)
+        train = list(train)
+        iter_by_epoch = int(len(train) / batch_size)
         while 1:
             #imgs = self.h5['images'][self.last_index:self.last_index+batch_size]
             lower_idx = i*batch_size
             upper_idx = lower_idx + batch_size
-            imgs = self.h5['images'][lower_idx:upper_idx]
+            imgs = self.h5['images'][train[lower_idx:upper_idx]]
             imgs = imgs.astype(np.float32)/255.0
             #labels = self.h5['labels'][self.last_index:self.last_index+batch_size]
-            labels = self.h5['labels'][lower_idx:upper_idx]
+            labels = self.h5['labels'][train[lower_idx:upper_idx]]
             yield (imgs, labels)
             i += 1
             if i >= iter_by_epoch:
@@ -129,6 +131,7 @@ def get_model():
 
 
 if __name__ == '__main__':
+    histsummary = np.array(())
     datatrain = get_data('train.h5')
     datatest = get_data('test.h5')
     if os.path.exists('./model.h5'):
@@ -160,10 +163,16 @@ if __name__ == '__main__':
     #checkpointer = ModelCheckpoint(filepath='model_weights.h5', verbose=1,
     #                                save_best_only=False,
     #                                save_weights_only=True)
-    history = model.fit_generator(datatrain.next_batch(128), 
+
+    kf = KFold(n_splits=128)
+    kfgen = kf.split(datatrain.h5['images'])
+    for i in trange(EPOCH):
+        train, test = kfgen.__next__()
+        history = model.fit_generator(datatrain.next_batch(train), 
                             samples_per_epoch=datatrain.size, 
-                            nb_epoch=EPOCH, 
+                            nb_epoch=1, 
                             verbose=1)
+        histsummary = np.append(histsummary, history.history['loss'])
                             #callbacks=[checkpointer])
     #history = model.fit(data['features'][0:1000].reshape(*data['features'][0:1000].shape, 1), 
     #                    data['steering'][0:1000], 
@@ -172,16 +181,17 @@ if __name__ == '__main__':
     #                    validation_split=0.2, 
     #                    shuffle=True)
 
-    score = model.evaluate_generator(datatest.next_batch(128),
-                            val_samples=datatest.size)
-    print('Test score: {}'.format(score[0]))
-    print('Test accuracy: {}'.format(score[1]))
+    #score = model.evaluate_generator(datatest.next_batch(128),
+    #                        val_samples=datatest.size)
+    #print('Test score: {}'.format(score[0]))
+    #print('Test accuracy: {}'.format(score[1]))
 
 
     #plot training history
     #plt.plot(history.history['val_loss'], '-r')
-    plt.plot(history.history['loss'], '-b')
+    #plt.plot(history.history['loss'], '-b')
     #plt.legend(['val_loss', 'training_loss'])
+    plt.plot(histsummary, '-b')
     plt.xlabel('epoch')
     plt.ylabel('Training loss')
     plt.title('Training History')
