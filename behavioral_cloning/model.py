@@ -22,7 +22,7 @@ IMGROWS = 120
 IMGCOLS = 320
 IMGCHAN = 3
 
-EPOCH = 10
+EPOCH = 5
 
 class get_data:
     def __init__(self, datafile):
