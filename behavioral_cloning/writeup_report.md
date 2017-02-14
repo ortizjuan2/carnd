@@ -7,11 +7,11 @@
 **Behavrioal Cloning Project**
 
 The goals / steps of this project are the following:
-* Use the simulator to collect data of good driving behavior
-* Build, a convolution neural network in Keras that predicts steering angles from images
-* Train and validate the model with a training and validation set
-* Test that the model successfully drives around track one without leaving the road
-* Summarize the results with a written report
+*   Use the simulator to collect data of good driving behavior
+*   Build, a convolution neural network in Keras that predicts steering angles from images
+*   Train and validate the model with a training and validation set
+*   Test that the model successfully drives around track one without leaving the road
+*   Summarize the results with a written report
 
 
 [//]: # (Image References)
@@ -30,27 +30,27 @@ The goals / steps of this project are the following:
 ####1. Submission includes all required files and can be used to run the simulator in autonomous mode
 
 My project includes the following files:
-* model.py containing the script to create and train the model
-* drive.py for driving the car in autonomous mode
-* model.h5 containing a trained convolution neural network
-* writeup_report.md summarizing the results
-* there are additional scripts used to preprocessing the data, although they were not submitted, they can be found in the github repo:
+*   model.py containing the script to create and train the model, it also has a generator function to pass batches of images and labels to the keras function fit_generator
+*   drive.py for driving the car in autonomous mode, the only modifications includes the preprocessing of the image before it is passed to the predictor, and a basic PID controller for the throttling.
+*   model.h5 containing the model and the weights after training the convolutional neural network
+*   writeup_report.md summarizing the results
+*   Below there are additional scripts used to preprocessing the data, although they were not submitted, they can be found in my [github repo.](https://github.com/ortizjuan2/carnd/tree/master/behavioral_cloning)
 
- * syncdata.py used to sync images and log driving in order to remove images with sharp angles, images with zero angle and to delete references to images no longer available
- * balancedata.py this script first classify each image in and angle bin, then it selects randomly the same amount of sample images from each angle bin thus balancing the data
- * augment_data.py takes balanced data and perform augmentation of each image, flip, motion blur and motion blur flipped.
- * get_data_v02.py takes the augmented data and makes a h5 dataset in order to facilitate passing samples to keras during training.
+*   syncdata.py used to sync images and log driving file in order to remove images with sharp angles, images with zero angle and to delete references to images no longer available
+*   balancedata.py this script first classify each image in and bin, then it selects randomly the same amount of sample images from each angle bin thus balancing the data
+*   augment_data.py takes the balanced data and perform augmentation of each image using flip, motion blur and motion blur flipped.
+*   get_data_v02.py takes the augmented data and makes a h5 dataset in order to facilitate passing samples to keras during training.
 
 ####2. Submssion includes functional code
 Using the Udacity provided simulator and my drive.py file, the car can be driven autonomously around the track by executing
 ```sh
 python drive.py model.h5
 ```
-*NOTE:* the drive.py file was modified to include the same image preprocessing as in the model training, which was just to nominalized the image between 0 and 1.0. It also includes a basic PID controller for the throttling in order to maintain a fix speed of 15.0
+*NOTE:* the drive.py file was modified to include the same image preprocessing as in the model training, which was just to normalize the image between 0 and 1.0. It also includes a basic PID controller for the throttling in order to maintain a fix speed of 10.0 MPH
 ####3. Submssion code is usable and readable
-The model.py file contains the code for training and saving the convolution neural network. The file shows the pipeline I used for training and validating the model, and it contains comments to explain how the code works. In summary this file creates a model using keras, fits the model with an Adam optimizer and then starts training using keras fit_generator.
-This file also includes the generator function to feed images in batches instead of the whole set of images which due to memory constrains it was not possible in my computer.
- 
+The model.py file contains the code for training and saving the convolutional neural network. The file shows the pipeline I used for training and validating the model, and it contains comments to explain how the code works. In summary this file creates a model using keras, fits the model with an Adam optimizer and then starts training using keras fit_generator.
+This file also includes the generator function to feed images in batches instead of the whole set of images, which due to memory constrains it was not possible in my computer.
+
 ###Model Architecture and Training Strategy
 
 ####1. An appropriate model arcthiecture has been employed
@@ -58,6 +58,33 @@ This file also includes the generator function to feed images in batches instead
 My model consists of a convolution neural network with 3x3 filter sizes and depths between 32 and 128 (model.py lines 18-24)
 
 The model includes RELU layers to introduce nonlinearity (code line 20), and the data is normalized in the model using a Keras lambda layer (code line 18).
+
+|Layer (type)                    | Output Shape         | Param #    |
+----------------------------------------------------------------------
+|convolution2d_1 (Convolution2D) | (None, 58, 158, 24)  | 1824       |
+|convolution2d_2 (Convolution2D) | (None, 27, 77, 36)   | 21636      |
+|convolution2d_3 (Convolution2D) | (None, 12, 37, 48)   | 43248      |
+|convolution2d_4 (Convolution2D) | (None, 5, 18, 64)    | 27712      |
+|convolution2d_5 (Convolution2D) | (None, 3, 16, 64)    | 36928      |
+|batchnormalization_1 (BatchNorma|(None, 3, 16, 64)     |256         |
+|activation_1 (Activation)       | (None, 3, 16, 64)    | 0          |
+|flatten_1 (Flatten)             | (None, 3072)         | 0          |
+|dense_1 (Dense)                 | (None, 256)          | 786688     |
+|batchnormalization_2 (BatchNorma| (None, 256)          | 1024       |
+|activation_2 (Activation)       | (None, 256)          | 0          |
+|dropout_1 (Dropout)             | (None, 256)          | 0          |
+|dense_2 (Dense)                 | (None, 128)          | 32896      |
+|batchnormalization_3 (BatchNorma| (None, 128)          | 512        |
+|activation_3 (Activation)       | (None, 128)          | 0          |
+|dropout_2 (Dropout)             | (None, 128)          | 0          |
+|dense_3 (Dense)                 | (None, 64)           | 8256       |
+|batchnormalization_4 (BatchNorma| (None, 64)           | 256        |
+|activation_4 (Activation)       | (None, 64)           | 0          |
+|dense_4 (Dense)                 | (None, 16)           | 1040       |
+|batchnormalization_5 (BatchNorma| (None, 16)           | 64         |
+|activation_5 (Activation)       | (None, 16)           | 0          |
+|dense_5 (Dense)                 | (None, 1)            | 17         |
+
 
 ####2. Attempts to reduce overfitting in the model
 
