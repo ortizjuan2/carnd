@@ -1,13 +1,10 @@
-# python
-
+# python 3.5
 from keras.models import Sequential, load_model
 from keras.layers.core import Dense, Dropout, Activation, Flatten
-#from keras.layers import Dense, Activation
 from keras.layers.convolutional import Convolution2D
 from keras.layers.normalization import BatchNormalization
 from keras.layers import MaxPooling2D
 from keras.optimizers import SGD, Adam
-#from keras.models import model_from_json
 from keras.callbacks import ModelCheckpoint
 import numpy as np
 import matplotlib.pyplot as plt
@@ -18,36 +15,34 @@ from random import randint
 from sklearn.model_selection import KFold
 from tqdm import trange
 
-IMGROWS = 120  
+IMGROWS = 120
 IMGCOLS = 320
 IMGCHAN = 3
 
 EPOCH = 10
 
+# Class used to pass chuncks of images and labels to the
+# keras fit_generator function
 class get_data:
     def __init__(self, datafile):
         self.last_index = 0
-        try:
+        try: # open dataset
             self.h5 = h5py.File(datafile, 'r')
-            #self.h5test = h5py.File(test, 'r')
         except OSError as e:
             print(e)
             exit(-1)
         self.size = self.h5['labels'].shape[0]
-        #self.test_size = self.h5test['labels'].shape[0]
         print('open data done!')
-        
+    # generator definition
     def next_batch(self, train, batch_size=128):
         i = 0
         train = list(train)
         iter_by_epoch = int(len(train) / batch_size)
         while 1:
-            #imgs = self.h5['images'][self.last_index:self.last_index+batch_size]
             lower_idx = i*batch_size
             upper_idx = lower_idx + batch_size
             imgs = self.h5['images'][train[lower_idx:upper_idx]]
             imgs = imgs.astype(np.float32)/255.0
-            #labels = self.h5['labels'][self.last_index:self.last_index+batch_size]
             labels = self.h5['labels'][train[lower_idx:upper_idx]]
             yield (imgs, labels)
             i += 1
@@ -55,76 +50,53 @@ class get_data:
                 i = 0
 
 
- 
+ # CNN model definition
 def get_model():
     model = Sequential()
-    model.add(Convolution2D(24, 5, 5, # 3 by 3 kernel with 16 filters
-                        border_mode='valid', 
+    model.add(Convolution2D(24, 5, 5, # 5 by 5 kernel with 24 filters
+                        border_mode='valid',
                         subsample=(2,2), # strides
                         dim_ordering='tf', # use tf ordering for the sample shape
                         input_shape=(IMGROWS, IMGCOLS, IMGCHAN),
-                        activation='elu'))
-    #model.add(Activation('relu'))
-    model.add(Convolution2D(36, 5, 5, # 3 by 3 kernel with 16 filters
-                        border_mode='valid', 
+                        activation='elu')) # ELU Activation
+    model.add(Convolution2D(36, 5, 5, # 5 by 5 kernel with 36 filters
+                        border_mode='valid',
                         subsample=(2,2), # strides
-                        dim_ordering='tf', # use tf ordering for the sample shape
+                        dim_ordering='tf',
                         activation='elu'))
-    #model.add(Activation('relu'))
-    model.add(Convolution2D(48, 5, 5, # 3 by 3 kernel with 16 filters
-                        border_mode='valid', 
+    model.add(Convolution2D(48, 5, 5, # 5 by 5 kernel with 48 filters
+                        border_mode='valid',
                         subsample=(2,2), # strides
-                        dim_ordering='tf', # use tf ordering for the sample shape
+                        dim_ordering='tf',
                         activation='elu'))
-    #model.add(MaxPooling2D(pool_size=(2,2)))
-    model.add(Convolution2D(64, 3, 3, # 3 by 3 kernel with 16 filters
-                        border_mode='valid', 
+    model.add(Convolution2D(64, 3, 3, # 3 by 3 kernel with 64 filters
+                        border_mode='valid',
                         subsample=(2,2), # strides
-                        dim_ordering='tf', # use tf ordering for the sample shape
+                        dim_ordering='tf',
                         activation='elu'))
-    #model.add(MaxPooling2D(pool_size=(2,2)))
-    model.add(Convolution2D(64, 3, 3, # 3 by 3 kernel with 16 filters
-                        border_mode='valid', 
+    model.add(Convolution2D(64, 3, 3, # 3 by 3 kernel with 64 filters
+                        border_mode='valid',
                         subsample=(1,1), # strides
-                        dim_ordering='tf')) # use tf ordering for the sample shape
+                        dim_ordering='tf'))
+    # Adding Batch Normalization layer
     model.add(BatchNormalization(epsilon=0.001, mode=0, axis=-1, momentum=0.99))
     model.add(Activation('elu'))
-    #model.add(Convolution2D(128,3,3, # 3 by 3 kernel with 16 filters
-    #                        border_mode='same', 
-    #                        subsample=(1,1), # strides
-    #                        dim_ordering='tf', # use tf ordering for the sample shape
-    #                        input_shape=(IMGROWS, IMGCOLS, IMGCHAN),
-    #                        activation='relu'))
-
-    #model.add(MaxPooling2D(pool_size=(2,2)))
-    model.add(Flatten())
-    #model.add(Dense(8192))
-    #model.add(Activation('relu'))
-    #model.add(Dropout(0.5))
-    #model.add(Dense(4096))
-    #model.add(Activation('relu'))
-    #model.add(Dropout(0.5))
-    #
-    #model.add(Dense(512))
-    #model.add(Activation('relu'))
-    #model.add(BatchNormalization(epsilon=0.001, mode=0, axis=-1, momentum=0.99))
-    #model.add(Dropout(0.4))
-    model.add(Dense(256))
+    model.add(Flatten()) # Flatten the layer to create first fully connected layer
+    model.add(Dense(256)) # First fully connected layer
     model.add(BatchNormalization(epsilon=0.001, mode=0, axis=-1, momentum=0.99))
     model.add(Activation('elu'))
-    model.add(Dropout(0.4))
-    model.add(Dense(128))
+    model.add(Dropout(0.4)) # add dropout layer to avoid overfitting
+    model.add(Dense(128))  # Second fully connected layer
     model.add(BatchNormalization(epsilon=0.001, mode=0, axis=-1, momentum=0.99))
     model.add(Activation('elu'))
-    model.add(Dropout(0.4))
-    model.add(Dense(64))
+    model.add(Dropout(0.4)) # additional dropout layer to avoid overfitting
+    model.add(Dense(64)) # third fully connected layer
     model.add(BatchNormalization(epsilon=0.001, mode=0, axis=-1, momentum=0.99))
     model.add(Activation('elu'))
-    model.add(Dense(16))
+    model.add(Dense(16)) # fifth fully connected layer
     model.add(BatchNormalization(epsilon=0.001, mode=0, axis=-1, momentum=0.99))
     model.add(Activation('elu'))
-    model.add(Dense(1))
-    #model.add(Activation('tanh'))
+    model.add(Dense(1)) # output layer
     #
     return model
 
@@ -132,80 +104,47 @@ def get_model():
 
 if __name__ == '__main__':
     histsummary = np.array(())
+    # open training and test datasets
     datatrain = get_data('train.h5')
     datatest = get_data('test.h5')
+    # open trained model
     if os.path.exists('./model.h5'):
-        #### load model
-        #json_file = open('./model.json', 'r')
-        #loaded_model_json = json_file.read()
-        #json_file.close()
-        #model = model_from_json(loaded_model_json)
-        # load weights into new model
         model = load_model("model.h5")
         print("Loaded model from disk")
-    else:
+    else: # model was not trained before, so create one
         model = get_model()
-
-
-#    data = pickle.load(open('train.p', 'rb'))
-#    data['features'] = data['features'].astype(np.float32)
-#    data['features'] = data['features']/255.0
-#
-#    test = pickle.load(open('test.p', 'rb'))
-#    test['features'] = test['features'].astype(np.float32)
-#    test['features'] = test['features']/255.0
-#
-
-    #sgd = SGD(lr=0.1, decay=1e-6, momentum=0.9, nesterov=True)
+    # define adam optimizer to start training the network
     adam = Adam(lr=0.001, beta_1=0.9, beta_2=0.999, epsilon=1e-8, decay=0.0)
+    # comile model and use mse as the loss function
     model.compile(loss='mean_squared_error', optimizer=adam, metrics=['accuracy'])
-
-    #checkpointer = ModelCheckpoint(filepath='model_weights.h5', verbose=1,
-    #                                save_best_only=False,
-    #                                save_weights_only=True)
-
+    # use K Fold cross validation
     kf = KFold(n_splits=128)
     kfgen = kf.split(datatrain.h5['images'])
     for i in range(EPOCH):
         train, test = kfgen.__next__()
-        history = model.fit_generator(datatrain.next_batch(train), 
-                            samples_per_epoch=datatrain.size, 
-                            nb_epoch=1, 
+        history = model.fit_generator(datatrain.next_batch(train),
+                            samples_per_epoch=datatrain.size,
+                            nb_epoch=1,
                             verbose=1)
         histsummary = np.append(histsummary, history.history['loss'])
-                            #callbacks=[checkpointer])
-#    history = model.fit(datatrain.h5['images'].astype(np.float32)/255.0, 
-#                        datatrain.h5['labels'], 
-#                        batch_size=128, 
-#                        nb_epoch=EPOCH, 
-#                        verbose=1, 
-#                        validation_split=0.2, 
-#                        shuffle=True)
+    # evaluate model using test dataset
+    testimgs = datatest.h5['images']
+    testimgs = testimgs.astype(np.float32)/255.0
+    testlabels = datatest.h5['labels']
+    score = model.evaluate(testimgs,
+                            testlabels,
+                            batch_size=128,
+                            verbose=1)
+    print('Test score: {}'.format(score[0]))
+    print('Test accuracy: {}'.format(score[1]))
 
-    #score = model.evaluate_generator(datatest.next_batch(128),
-    #                        val_samples=datatest.size)
-    #print('Test score: {}'.format(score[0]))
-    #print('Test accuracy: {}'.format(score[1]))
-
+    # save trained model to disk
     model.save('model.h5')
     print("Saved model to disk")
-
-
-    #plot training history
-#    plt.plot(history.history['val_loss'], '-r')
-#    plt.plot(history.history['loss'], '-b')
-#    plt.legend(['val_loss', 'training_loss'])
+    # plot loss history to see if model was decreasing loss error
     plt.plot(histsummary, '-b')
     plt.xlabel('epoch')
     plt.ylabel('Training loss')
     plt.title('Training History')
     plt.grid(True)
     plt.show()
-
-    #### serialize model to JSON
-    #model_json = model.to_json()
-    #with open("model.json", "w") as json_file:
-    #    json_file.write(model_json)
-    # serialize weights to HDF5
-    #model.save_weights("model.h5")
-

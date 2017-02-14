@@ -14,22 +14,16 @@ from io import BytesIO
 
 from keras.models import load_model
 
-#import pickle
 
 sio = socketio.Server()
 app = Flask(__name__)
 model = None
-#prev_image_array = None
 
 
-#gamma = 0.3
 prev_steering_angle = None
-prev_t = None
-ie = 0
-prev_e = 0
-
-#speed_summary = {'speed':[]}
-#saved = False
+prev_t = None # used by the PID controller as t-1
+ie = 0 # Integration error
+prev_e = 0 # previous error
 
 @sio.on('telemetry')
 def telemetry(sid, data):
@@ -38,12 +32,12 @@ def telemetry(sid, data):
     global ie
     global prev_e
     #global saved
-    gamma = 0.3
+    gamma = 0.3 # used by the angle exponential moving average
 
-    max_speed = 10.0
-    kp = 0.1
-    ki = 0.01
-    kd = 0.1
+    max_speed = 10.0 # maximun allowed speed in the simulator
+    kp = 0.1 # proportional
+    ki = 0.01 # integral
+    kd = 0.1 # derivative
 
     if data:
         # The current steering angle of the car
@@ -52,19 +46,15 @@ def telemetry(sid, data):
         throttle = data["throttle"]
         # The current speed of the car
         speed = data["speed"]
-        ##
-        #speed_summary['speed'].append(speed)
-        #if len(speed_summary['speed']) >= 200 and not saved:
-        #    pickle.dump(speed_summary, open('spsummary.p', 'wb'))
-        #    print("Saved !!!")
-        #    saved = True
-        ##
         # The current image from the center camera of the car
         imgString = data["image"]
         image = Image.open(BytesIO(base64.b64decode(imgString)))
         image_array = np.asarray(image)
+        # do same preprocessing of the image as in the training stage
         transformed_image_array = image_array[None,20:140, :, :].astype(np.float32)/255.0
+        # predict angle
         steering_angle = float(model.predict(transformed_image_array, batch_size=1))
+        # do exponential moving average to reduce bouncing of the car
         if prev_steering_angle is None:
             prev_steering_angle = steering_angle
         else:
@@ -83,7 +73,7 @@ def telemetry(sid, data):
         ie = ie + e*dt
         throttle = kp*e + ki*ie + kd*((e-prev_e)/dt)
         prev_e = e
-        
+
         if throttle < 0:
             throttle = 0
         elif throttle > 1.0:

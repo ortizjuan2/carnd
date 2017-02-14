@@ -8,7 +8,9 @@ drivinglog = './driving_log_all.csv'
 header = 'center,left,right,steering,throttle,brake,speed'
 outcsv = './driving_log.csv'
 
-
+# sync current images with the driving log,
+# also remove images with sharp angles, and images
+# with zero angle
 if __name__ == '__main__':
     try:
         log = read_csv(drivinglog)
@@ -17,7 +19,7 @@ if __name__ == '__main__':
     except OSError as e:
         print('Error opening driving log. {}'.format(e))
         exit(-1)
-    
+
     for i in trange(len(log['center'])):
         imgfile = Path(log['center'][i])
         if imgfile.is_file():
@@ -33,7 +35,3 @@ if __name__ == '__main__':
                     + str(log['speed'][i]) + '\n'
                 outf.write(line)
     outf.close()
-
-
-
-
