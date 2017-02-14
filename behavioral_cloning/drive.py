@@ -40,7 +40,7 @@ def telemetry(sid, data):
     #global saved
     gamma = 0.3
 
-    max_speed = 15.0
+    max_speed = 10.0
     kp = 0.1
     ki = 0.01
     kd = 0.1

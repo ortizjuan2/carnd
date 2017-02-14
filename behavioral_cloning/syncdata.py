@@ -21,7 +21,7 @@ if __name__ == '__main__':
     for i in trange(len(log['center'])):
         imgfile = Path(log['center'][i])
         if imgfile.is_file():
-            if (log['steering'][i] == 0.0) or (log['steering'][i] >= 0.6) or (log['steering'][i] <= -0.6):
+            if (log['steering'][i] == 0.0) or (log['steering'][i] >= 0.7) or (log['steering'][i] <= -0.7):
                 remove(str(imgfile.absolute()))
             else:
                 line = log['center'][i] + ',' \

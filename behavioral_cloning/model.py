@@ -22,7 +22,7 @@ IMGROWS = 120
 IMGCOLS = 320
 IMGCHAN = 3
 
-EPOCH = 5
+EPOCH = 10
 
 class get_data:
     def __init__(self, datafile):
@@ -166,7 +166,7 @@ if __name__ == '__main__':
 
     kf = KFold(n_splits=128)
     kfgen = kf.split(datatrain.h5['images'])
-    for i in trange(EPOCH):
+    for i in range(EPOCH):
         train, test = kfgen.__next__()
         history = model.fit_generator(datatrain.next_batch(train), 
                             samples_per_epoch=datatrain.size, 
@@ -174,23 +174,27 @@ if __name__ == '__main__':
                             verbose=1)
         histsummary = np.append(histsummary, history.history['loss'])
                             #callbacks=[checkpointer])
-    #history = model.fit(data['features'][0:1000].reshape(*data['features'][0:1000].shape, 1), 
-    #                    data['steering'][0:1000], 
-    #                    batch_size=128, nb_epoch=10, 
-    #                    verbose=1, 
-    #                    validation_split=0.2, 
-    #                    shuffle=True)
+#    history = model.fit(datatrain.h5['images'].astype(np.float32)/255.0, 
+#                        datatrain.h5['labels'], 
+#                        batch_size=128, 
+#                        nb_epoch=EPOCH, 
+#                        verbose=1, 
+#                        validation_split=0.2, 
+#                        shuffle=True)
 
     #score = model.evaluate_generator(datatest.next_batch(128),
     #                        val_samples=datatest.size)
     #print('Test score: {}'.format(score[0]))
     #print('Test accuracy: {}'.format(score[1]))
 
+    model.save('model.h5')
+    print("Saved model to disk")
+
 
     #plot training history
-    #plt.plot(history.history['val_loss'], '-r')
-    #plt.plot(history.history['loss'], '-b')
-    #plt.legend(['val_loss', 'training_loss'])
+#    plt.plot(history.history['val_loss'], '-r')
+#    plt.plot(history.history['loss'], '-b')
+#    plt.legend(['val_loss', 'training_loss'])
     plt.plot(histsummary, '-b')
     plt.xlabel('epoch')
     plt.ylabel('Training loss')
@@ -204,7 +208,4 @@ if __name__ == '__main__':
     #    json_file.write(model_json)
     # serialize weights to HDF5
     #model.save_weights("model.h5")
-    model.save('model.h5')
-    print("Saved model to disk")
-
 
