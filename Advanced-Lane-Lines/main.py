@@ -118,7 +118,7 @@ if __name__ == '__main__':
     white_clip.write_videofile(test_output, audio=False)
 """
 filenames = glob('./video/*.jpg')
-for i in trange(len(filenames)):
+for i in trange(len(filenames)-1100):
     image = cv2.imread(filenames[i])
     dst = process_image(image)
     ret = cv2.imwrite('./video_warped/main{:02d}.jpg'.format(i), dst)        

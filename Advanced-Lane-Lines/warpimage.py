@@ -7,7 +7,7 @@ import numpy as np
 from tqdm import trange
 from undistort import loadcameramtx, undistortimage
 
-distance_from_vp = 45
+distance_from_vp = 65
 golden_ratio = 1.6180339887498949
 border = 100
 
