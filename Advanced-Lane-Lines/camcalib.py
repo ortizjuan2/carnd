@@ -31,7 +31,7 @@ def camera_cal(imgfiles):
             objpoints.append(objp)
             imgpoints.append(corners)
     # use object points and image points to calibrate camera
-    ret, cameraMatrix, distCoeffs, rvecs, tvecs = cv2.calibrateCamera(objpoints, imgpoints, gray.shape, None, None)
+    ret, cameraMatrix, distCoeffs, rvecs, tvecs = cv2.calibrateCamera(objpoints, imgpoints, gray.shape[::-1], None, None)
 
     # camera calibration complete, save mtx and dist matrices
     cam_mat = {'mtx':cameraMatrix, 'dist':distCoeffs, 'rvecs':rvecs, 'tvecs':tvecs}
