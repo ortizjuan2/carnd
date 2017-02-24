@@ -15,7 +15,11 @@ def convert2binary(image, thr=150 ):
     hsv_H,hsv_S,hsv_V = cv2.split(HSV)
     HLS = cv2.cvtColor(image, cv2.COLOR_BGR2HLS)
     hls_H,hls_L,hls_S = cv2.split(HLS)
-
+    #
+    #r = image[:,:,2]
+    #r_bin = np.zeros_like(r)
+    #r_bin[r > 100] = 255
+    #
     gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
                                                
     sobelx = cv2.Sobel(gray, cv2.CV_64F, 1, 0)
@@ -109,6 +113,8 @@ ax1.imshow(color_binary)
 
 ax2.set_title('Combined S channel and gradient thresholds')
 ax2.imshow(combined_binary, cmap='gray')
+
+
 
 
 """

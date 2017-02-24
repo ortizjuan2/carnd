@@ -7,8 +7,8 @@ import numpy as np
 from tqdm import trange
 
 gamma = 0.8
-S_left = np.array([0,0], dtype=np.float32)
-S_right = np.array([0,0], dtype=np.float32)
+S_left = np.array([0,0,0], dtype=np.float32).reshape(1,3)
+S_right = np.array([0,0,0], dtype=np.float32).reshape(1,3)
 
 
 def findlane(warped):
@@ -38,9 +38,9 @@ def findlane(warped):
     leftx_current = leftx_base
     rightx_current = rightx_base
     # Set the width of the windows +/- margin
-    margin = 150
+    margin = 80
     # Set minimum number of pixels found to recenter window
-    minpix = 30
+    minpix = 50
     # Create empty lists to receive left and right lane pixel indices
     left_lane_inds = []
     right_lane_inds = []
@@ -50,13 +50,13 @@ def findlane(warped):
         # Identify window boundaries in x and y (and right and left)
         win_y_low = warped.shape[0] - (window+1)*window_height
         win_y_high = warped.shape[0] - window*window_height
-        win_xleft_low = leftx_current - margin
-        win_xleft_high = leftx_current + margin
-        win_xright_low = rightx_current - margin
-        win_xright_high = rightx_current + margin
+        win_xleft_low = leftx_current - margin# + (window)
+        win_xleft_high = leftx_current + margin# - (window)
+        win_xright_low = rightx_current - margin# + (widow)
+        win_xright_high = rightx_current + margin# - (window)
         # Draw the windows on the visualization image
-        #ret = cv2.rectangle(out_img,(win_xleft_low,win_y_low),(win_xleft_high,win_y_high),(0,255,0), 2) 
-        #ret = cv2.rectangle(out_img,(win_xright_low,win_y_low),(win_xright_high,win_y_high),(0,255,0), 2) 
+        ret = cv2.rectangle(out_img,(win_xleft_low,win_y_low),(win_xleft_high,win_y_high),(0,255,0), 2) 
+        ret = cv2.rectangle(out_img,(win_xright_low,win_y_low),(win_xright_high,win_y_high),(0,255,0), 2) 
         # Identify the nonzero pixels in x and y within the window
         good_left_inds = ((nonzeroy >= win_y_low) 
                         & (nonzeroy < win_y_high) 
@@ -89,22 +89,28 @@ def findlane(warped):
     righty = nonzeroy[right_lane_inds] 
 
     # Fit a second order polynomial to each
-    left_fit = np.polyfit(lefty, leftx, 2)
-    right_fit = np.polyfit(righty, rightx, 2)
+    left_fit = np.polyfit(lefty, leftx, 2).reshape(1,3)
+    right_fit = np.polyfit(righty, rightx, 2).reshape(1,3)
     if S_left.all() == 0:
         S_left = left_fit
         S_right = right_fit
     else:
-        S_left = (gamma)*left_fit + (1-gamma)*S_left
-        left_fit = S_left
-        S_right = (gamma)*right_fit + (1-gamma)*S_right
-        right_fit = S_right
+        #S_left = (gamma)*left_fit + (1-gamma)*S_left
+        #left_fit = S_left
+        #S_right = (gamma)*right_fit + (1-gamma)*S_right
+        #right_fit = S_right
+        S_left = np.append(S_left, left_fit, axis=0)
+        S_right = np.append(S_right, right_fit, axis=0)
+        if S_left.shape[0] > 20:
+            S_left = S_left[1:,:]
+            S_right = S_right[1:,:]
+        left_fit = S_left.mean(axis=0)
+        right_fit = S_right.mean(axis=0)
 
-    
 
 ## 
-    fleft = np.poly1d(left_fit)
-    fright = np.poly1d(right_fit)
+    fleft = np.poly1d(left_fit.reshape(3,))
+    fright = np.poly1d(right_fit.reshape(3,))
     # Generate x and y values for plotting
     #ploty = np.linspace(0, warped.shape[0]-1, warped.shape[0] )
     #left_fitx = fleft(ploty)
