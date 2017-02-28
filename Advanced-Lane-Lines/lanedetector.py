@@ -85,14 +85,14 @@ class lane(object):
             win_xright_low = rightx_current - self.margin# + (widow)
             win_xright_high = rightx_current + self.margin# - (window)
             # Draw the windows on the visualization image
-            #ret = cv2.rectangle(out_img,
-            #                    (win_xleft_low,win_y_low),
-            #                    (win_xleft_high,win_y_high),
-            #                    (0,255,0), 2) 
-            #ret = cv2.rectangle(out_img,
-            #                    (win_xright_low,win_y_low),
-            #                    (win_xright_high,win_y_high),
-            #                    (0,255,0), 2) 
+            ret = cv2.rectangle(out_img,
+                                (win_xleft_low,win_y_low),
+                                (win_xleft_high,win_y_high),
+                                (0,255,0), 2) 
+            ret = cv2.rectangle(out_img,
+                                (win_xright_low,win_y_low),
+                                (win_xright_high,win_y_high),
+                                (0,255,0), 2) 
             # Identify the nonzero pixels in x and y within the window
             good_left_inds = ((nonzeroy >= win_y_low) 
                             & (nonzeroy < win_y_high) 
@@ -187,27 +187,11 @@ class lane(object):
         # Fit a second order polynomial to each
         left_fit = np.polyfit(lefty, leftx, 2).reshape(1,3)
         right_fit = np.polyfit(righty, rightx, 2).reshape(1,3)
-        
-
-
-
-        
-
         # moving average
         self.S_left = (gamma)*left_fit + (1-gamma)*self.S_left
         left_fit = self.S_left
         self.S_right = (gamma)*right_fit + (1-gamma)*self.S_right
         right_fit = self.S_right
-        # moving average end section
-        #self.S_left = np.append(self.S_left, left_fit, axis=0)
-        #self.S_right = np.append(self.S_right, right_fit, axis=0)
-        # store only upto maxlast lanes detected
-        #if self.S_left.shape[0] > self.maxlast:
-        #    self.S_left = self.S_left[1:,:]
-        #    self.S_right = self.S_right[1:,:]
-        #left_fit = self.S_left.mean(axis=0)
-        #right_fit = self.S_right.mean(axis=0)
-        ## 
         fleft = np.poly1d(left_fit.reshape(3,))
         fright = np.poly1d(right_fit.reshape(3,))
         ## Create an image to draw on and an image to show the selection window
@@ -312,20 +296,6 @@ class lane(object):
                             font, 
                             .6, 
                              (255,0,0), 2)
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
  
     def loadcameramtx(self, paramsfile):
