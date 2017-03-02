@@ -183,8 +183,8 @@ The following code snip from the `drawlane` function inside the `lanedetector` c
 ```python   
 #Generate some fake data to represent lane-line pixels
 # Define conversions in x and y from pixels space to meters
-ym_per_pix = 30/720 # meters per pixel in y dimension
-xm_per_pix = 3.7/700 # meters per pixel in x dimension
+ym_per_pix = 3.048/390.862 # meters per pixel in y dimension
+xm_per_pix = 3.7/912.6 # meters per pixel in x dimension
 y_eval = np.max(ploty)
 # Fit new polynomials to x,y in world space
 left_fit_cr = np.polyfit(ploty.reshape(ploty.shape[0],)*ym_per_pix, left_fitx*xm_per_pix, 2)
@@ -205,8 +205,7 @@ self.final_image = cv2.putText(self.final_image,
                              (255,0,0), 2)
         
 # find lane center
-lane_centerx = (func_right(image.shape[0]) - func_left(image.shape[0])) / 2.0
-lane_centerx = func_left(image.shape[0]) + lane_centerx
+lane_centerx = func_left(self.warped.shape[0]) + (912.6/2.0) #Use only left lane to identify center
 offset = (lane_centerx - self.camera_center[0]) * xm_per_pix  
 self.final_image = cv2.putText(self.final_image,
                             'Vehicle Offset: {:06.2f} m'.format(offset), 
