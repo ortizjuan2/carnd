@@ -19,12 +19,14 @@ detector = None
 def process_image(image):
     global model
     global detector
-    dst = detector.draw_boxes(image, model)
+    global color_code
+    dst = detector.draw_boxes(image, model, color_code)
     return dst
 
     
 
 if __name__ == '__main__':
+    color_code = 'RGB'
     model = vhdetector.model()
     detector = vhdetector.detector()
     test_output = 'result.mp4'
@@ -37,7 +39,7 @@ if __name__ == '__main__':
 #    files = sorted(glob('video/*.jpg'))
 #    model = vhdetector.model()
 #    detector = vhdetector.detector()
-#
+#    color_code = 'BGR'
 #    #draw boxes
 #    for i in trange(len(files)):
 #        image = cv2.imread(files[i])
