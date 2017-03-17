@@ -186,9 +186,9 @@ This is the complete `trainmodel()` function.
 
 ####1. Describe how (and identify where in your code) you implemented a sliding window search.  How did you decide what scales to search and how much to overlap windows?
 
-I decided to divide the botton part of the image in sections of different heights. The heights were calculated based on the perspective towars the vanishing point, that is why i neede to use the camera file from previous project.
+I decided to divide the botton part of the image in horizontal sections of different heights. The heights were calculated based on the perspective towars the vanishing point, that's why i neede to use the camera file from previous project to identify the center of the camera on the image.
 
-This is the result of the division on an actual project image and the final set of windows:
+Below is the result of the division on an actual test image and the final set of windows:
 
 ![alt text][image3]
 
