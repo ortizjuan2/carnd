@@ -4,7 +4,7 @@
 
 Overview
 ---
-This repository contains a solution to P3, Behavioral Cloning.
+This repository contains a solution to project P3, Behavioral Cloning.
 
 A convolutional neural network was trained to predict steering angle to an autonomous vehicle based on the images of the road provided by the Udacity's simulator. 
 
