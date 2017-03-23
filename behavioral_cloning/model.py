@@ -111,7 +111,7 @@ if __name__ == '__main__':
     if os.path.exists('./model.h5'):
         model = load_model("model.h5")
         print("Loaded model from disk")
-    else: # model was not trained before, so create one
+    else: # if model was not trained before, so create one
         model = get_model()
     # define adam optimizer to start training the network
     adam = Adam(lr=0.001, beta_1=0.9, beta_2=0.999, epsilon=1e-8, decay=0.0)
